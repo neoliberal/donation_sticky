@@ -17,7 +17,9 @@ if __name__ == "__main__":
     bot = DonationSticky(
         reddit,
         os.environ["subreddit"],
-        os.environ["amf_url"]
+        os.environ["amf_url"],
+        os.environ["dt_title"],
+        os.environ["dt_author"]
     )
     while True:
         bot.listen()

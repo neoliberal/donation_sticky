@@ -5,22 +5,23 @@ import sys
 import time
 
 from bs4 import BeautifulSoup
-from prawcore.exceptions import PrawcoreException
+from prawcore.exceptions import PrawcoreException, Forbidden
 import requests
 from slack_python_logging import slack_logger
 
 
-class DonationSticky(object):
+class DonationSticky:
     """Main bot class"""
-    __slots__ = ["reddit", "subreddit", "amf_url", "logger", "tracked"]
 
-    def __init__(self, reddit, subreddit, amf_url):
+    def __init__(self, reddit, subreddit, amf_url, dt_title, dt_author):
         """initialize DonationSticky"""
         self.reddit = reddit
         self.subreddit = self.reddit.subreddit(subreddit)
         self.amf_url = amf_url
         self.logger = slack_logger.initialize("donation_sticky")
         self.tracked = self.load()
+        self.dt_title = dt_title
+        self.dt_author = dt_author
 
         signal.signal(signal.SIGTERM, self.exit) # for systemd
         self.logger.info("Successfully initialized")
@@ -125,13 +126,18 @@ class DonationSticky(object):
             f"drive and said:\n\n{quote_string}\n\nTo claim this spot, "+
             f"donate at least $25 to the AMF at {self.amf_url}"
         )
-        submission.reply(msg).mod.distinguish(sticky=True)
+        comment = submission.reply(msg)
+        try:
+            comment.mod.distinguish(sticky=True)
+        except Forbidden:
+            # Not a moderator, can't sticky post
+            pass
         self.logger.debug("Stickied donation message from %s", name)
 
     def get_discussion_thread(self):
         self.logger.debug("Finding discussion thread")
-        for submission in self.subreddit.search("Discussion Thread", sort="new"):
-            if submission.author == self.reddit.user.me():
+        for submission in self.subreddit.search(self.dt_title, sort="new"):
+            if submission.author == self.dt_author:
                 self.logger.debug("Found discussion thread")
                 return submission
         self.logger.critial("Could not find discussion thread")
