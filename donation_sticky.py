@@ -18,7 +18,11 @@ class DonationSticky:
         self.reddit = reddit
         self.subreddit = self.reddit.subreddit(subreddit)
         self.amf_url = amf_url
-        self.logger = slack_logger.initialize("donation_sticky")
+        self.logger = slack_logger.initialize(
+            app_name = "donation_sticky",
+            slack_loglevel = "CRITICAL",
+            stream_loglevel = "INFO"
+        )
         self.tracked = self.load()
         self.dt_title = dt_title
         self.dt_author = dt_author
@@ -56,6 +60,7 @@ class DonationSticky:
                     
     def listen(self):
         """Listen for new donations at AMF url"""
+        self.logger.debug("Checking AMF URL for new donations")
         page_raw = requests.get(self.amf_url)
         page = BeautifulSoup(page_raw.text, "lxml")
         table_id = "ctl00_MainContent_UcFundraiserSponsors1_grdDonors"
@@ -116,6 +121,7 @@ class DonationSticky:
 
     def post_comment(self, donation):
         """Stickies the donation message in the DT"""
+        self.logger.debug("Posting donation message")
         submission = self.get_discussion_thread()
         name, location, amount, message = donation
         quote_string = "\n".join(
@@ -132,7 +138,7 @@ class DonationSticky:
         except Forbidden:
             # Not a moderator, can't sticky post
             pass
-        self.logger.debug("Stickied donation message from %s", name)
+        self.logger.info("Posted donation message from %s", name)
 
     def get_discussion_thread(self):
         self.logger.debug("Finding discussion thread")
@@ -140,4 +146,4 @@ class DonationSticky:
             if submission.author == self.dt_author:
                 self.logger.debug("Found discussion thread")
                 return submission
-        self.logger.critial("Could not find discussion thread")
+        self.logger.critical("Could not find discussion thread")
