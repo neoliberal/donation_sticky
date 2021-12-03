@@ -13,7 +13,7 @@ from slack_python_logging import slack_logger
 class DonationSticky:
     """Main bot class"""
 
-    def __init__(self, reddit, subreddit, amf_url, dt_title, dt_author):
+    def __init__(self, reddit, subreddit, amf_url, dt_title, dt_author, announcement_url):
         """initialize DonationSticky"""
         self.reddit = reddit
         self.subreddit = self.reddit.subreddit(subreddit)
@@ -26,6 +26,7 @@ class DonationSticky:
         self.tracked = self.load()
         self.dt_title = dt_title
         self.dt_author = dt_author
+        self.announcement_url = announcement_url
 
         signal.signal(signal.SIGTERM, self.exit) # for systemd
         self.logger.info("Successfully initialized")
@@ -63,10 +64,11 @@ class DonationSticky:
         self.logger.debug("Checking AMF URL for new donations")
         page_raw = requests.get(self.amf_url)
         page = BeautifulSoup(page_raw.text, "lxml")
-        table_id = "ctl00_MainContent_UcFundraiserSponsors1_grdDonors"
+        table_id = "MainContent_UcFundraiserSponsors1_grdDonors"
         table = page.find(id=table_id)
         if table is None:
             # Not sure why, but this happened once
+            self.logger.error("Couldn't find table!")
             time.sleep(60)
             return
         item_class = "TableItemText"
@@ -130,7 +132,8 @@ class DonationSticky:
         msg = (
             f"{name} from {location} donated ${amount:.2f} to the charity "+
             f"drive and said:\n\n{quote_string}\n\nTo claim this spot, "+
-            f"donate at least $25 to the AMF at {self.amf_url}"
+            f"[donate at least $25 to the AMF]({self.amf_url}). "+
+            f"For more info [see this thread]({self.announcement_url})."
         )
         comment = submission.reply(msg)
         try:

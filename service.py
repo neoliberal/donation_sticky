@@ -19,7 +19,8 @@ if __name__ == "__main__":
         os.environ["subreddit"],
         os.environ["amf_url"],
         os.environ["dt_title"],
-        os.environ["dt_author"]
+        os.environ["dt_author"],
+        os.environ["announcement_url"],
     )
     while True:
         bot.listen()
