@@ -62,7 +62,7 @@ class DonationSticky:
     def listen(self):
         """Listen for new donations at AMF url"""
         self.logger.debug("Checking AMF URL for new donations")
-        page_raw = requests.get(self.amf_url)
+        page_raw = requests.get(self.amf_url, verify = False)
         page = BeautifulSoup(page_raw.text, "lxml")
         table_id = "MainContent_UcFundraiserSponsors1_grdDonors"
         table = page.find(id=table_id)
@@ -80,10 +80,16 @@ class DonationSticky:
             for col in table.find("tr", class_ = "TableHeaderStyle") 
             if hasattr(col, "get_text")
         ]
-        name_idx = column_labels.index("sponsor")
-        location_idx = column_labels.index("location")
-        amount_idx = column_labels.index("us$")
-        msg_idx = column_labels.index("message")
+        # Fuck it we hardcoding
+        # I don't feel like debugging the scraping
+        name_idx = 1
+        location_idx = 3
+        amount_idx = 6
+        msg_idx = 8
+        #name_idx = column_labels.index("sponsor")
+        #location_idx = column_labels.index("location")
+        #amount_idx = column_labels.index("us$")
+        #msg_idx = column_labels.index("message")
 
         donations = []
         for row in table.find_all("tr", class_ = item_class):
