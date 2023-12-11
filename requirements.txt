@@ -1,0 +1,4 @@
+praw
+git+https://github.com/neoliberal/slack_python_logging@v2.2.0
+beautifulsoup4
+lxml
